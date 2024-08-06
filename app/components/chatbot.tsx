@@ -15,7 +15,6 @@ const Chatbot = () => {
     if (input.trim()) {
       setMessages([...messages, { text: input, sender: 'user' }]);
       setInput('');
-      // Here you would typically send the message to your chatbot API and handle the response
     }
   };
 
