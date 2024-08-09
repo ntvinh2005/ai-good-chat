@@ -7,16 +7,16 @@ export async function POST(request: Request) {
 
   try {
     const response = await fetch(
-      "https://api-inference.huggingface.co/models/google/flan-t5-large",
+      "https://api-inference.huggingface.co/models/satyanshu404/flan-t5-large-finetuned-prompt_generation",
       {
         headers: { Authorization: `Bearer ${API_TOKEN}`, 'Content-Type': 'application/json' },
         method: "POST",
-        body: JSON.stringify({ inputs: `Identify all ingredients from: ${prompt}` }),
+        body: JSON.stringify({ inputs: `Extract all food ingredients implied or mentioned in this text: "${prompt}".` }),
       }
     );
 
     const result = await response.json();
-    console.log('Ingredients extraction response:', result); // Log the response for debugging
+    console.log('Ingredients extraction response:', result); 
 
     const ingredients = result?.[0]?.generated_text || 'No response';
 

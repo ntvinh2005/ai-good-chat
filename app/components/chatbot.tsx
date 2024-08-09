@@ -23,36 +23,44 @@ const Chatbot: React.FC = () => {
   
     try {
       const generateResponse = await axios.post('/api/generate', { prompt: input });
-      console.log('Generate response:', generateResponse.data); 
-      const ingredients = generateResponse.data.ingredients;
+      console.log('Generate response:', generateResponse.data);
+      
+      const ingredientsString: string = generateResponse.data.ingredients;
+      const detectedIngredients: string[] = ingredientsString ? ingredientsString.split(',').map(ingredient => ingredient.trim()) : [];
+      
+      console.log('Detected ingredients:', detectedIngredients); 
   
-      const recipesResponse = await axios.get('/api/recipes', { params: { q: input } });
-      console.log('Recipes response:', recipesResponse.data); 
-      const recipes = recipesResponse.data.hits;
+      if (detectedIngredients.length > 0) {
+        const recipesResponse = await axios.get('/api/recipes', { params: { q: detectedIngredients.join(',') } });
+        const recipes = recipesResponse.data.hits;
   
-      let recipesContent: JSX.Element | string = 'No recipes found. Please try different ingredients.';
-      if (recipes.length > 0) {
-        recipesContent = (
-          <div>
-            {recipes.map((recipe: any) => {
-              const { recipe: { label, image, url } } = recipe;
-              return (
-                <div key={url} className="mb-4 p-2 rounded-lg bg-white shadow-md">
-                  <h3 className="text-lg font-bold">{label}</h3>
-                  <img src={image} alt={label} className="w-full h-32 object-cover rounded-lg mb-2" />
-                  <a href={url} className="text-blue-500" target="_blank" rel="noopener noreferrer">View Recipe</a>
-                </div>
-              );
-            })}
-          </div>
-        );
+        let recipesContent: JSX.Element | string = 'No recipes found. Please try different ingredients.';
+        if (recipes.length > 0) {
+          recipesContent = (
+            <div>
+              {recipes.map((recipe: any) => {
+                const { recipe: { label, image, url } } = recipe;
+                return (
+                  <div key={url} className="mb-4 p-2 rounded-lg bg-white shadow-md">
+                    <h3 className="text-lg font-bold">{label}</h3>
+                    <img src={image} alt={label} className="w-full h-32 object-cover rounded-lg mb-2" />
+                    <a href={url} className="text-blue-500" target="_blank" rel="noopener noreferrer">View Recipe</a>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        }
+  
+        const recipeMessage: ChatMessage = {
+          text: <div>Here are some recipes you can make with {detectedIngredients.join(', ')}: {recipesContent}</div>,
+          sender: 'bot'
+        };
+        setMessages([...messages, userMessage, recipeMessage]);
+      } else {
+        const errorMessage: ChatMessage = { text: 'Sorry, I couldn\'t find any ingredients in your message.', sender: 'bot' };
+        setMessages([...messages, userMessage, errorMessage]);
       }
-  
-      const recipeMessage: ChatMessage = {
-        text: <div>Here are some recipes you can make with {ingredients}: {recipesContent}</div>,
-        sender: 'bot'
-      };
-      setMessages([...messages, userMessage, recipeMessage]);
     } catch (error) {
       console.error('Error sending message:', error);
       const errorMessage: ChatMessage = { text: 'Error sending message. Please try again.', sender: 'bot' };
@@ -61,6 +69,8 @@ const Chatbot: React.FC = () => {
       setLoading(false);
     }
   };
+  
+  
   
 
   return (
@@ -98,4 +108,3 @@ const Chatbot: React.FC = () => {
 };
 
 export default Chatbot;
-
