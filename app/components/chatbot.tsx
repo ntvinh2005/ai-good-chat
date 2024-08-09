@@ -23,12 +23,19 @@ const Chatbot: React.FC = () => {
   
     try {
       const generateResponse = await axios.post('/api/generate', { prompt: input });
+  
       console.log('Generate response:', generateResponse.data);
       
+      // Check if the response has an error or is incomplete
+      if (!generateResponse.data || !generateResponse.data.ingredients) {
+        throw new Error('Invalid response or model still loading');
+      }
+  
+      // Handle the case where ingredients are returned as a string
       const ingredientsString: string = generateResponse.data.ingredients;
       const detectedIngredients: string[] = ingredientsString ? ingredientsString.split(',').map(ingredient => ingredient.trim()) : [];
       
-      console.log('Detected ingredients:', detectedIngredients); 
+      console.log('Detected ingredients:', detectedIngredients); // Debug log
   
       if (detectedIngredients.length > 0) {
         const recipesResponse = await axios.get('/api/recipes', { params: { q: detectedIngredients.join(',') } });
@@ -58,17 +65,21 @@ const Chatbot: React.FC = () => {
         };
         setMessages([...messages, userMessage, recipeMessage]);
       } else {
+        // Return a hardcoded "Sorry" message if no ingredients are detected
         const errorMessage: ChatMessage = { text: 'Sorry, I couldn\'t find any ingredients in your message.', sender: 'bot' };
         setMessages([...messages, userMessage, errorMessage]);
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      const errorMessage: ChatMessage = { text: 'Error sending message. Please try again.', sender: 'bot' };
+  
+      // Handle specific loading or invalid response errors
+      const errorMessage: ChatMessage = { text: 'Sorry, there was an issue processing your request. Please try again later.', sender: 'bot' };
       setMessages([...messages, userMessage, errorMessage]);
     } finally {
       setLoading(false);
     }
   };
+  
   
   
   
